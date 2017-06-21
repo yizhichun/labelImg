@@ -64,17 +64,10 @@ class Shape(object):
 
 
     def rotate(self, theta):
-        # print('rotate angle is %lf' % theta)
         for i, p in enumerate(self.points):
-            # print('shape points (%d, %d)' % (p.x(), p.y()))
             self.points[i] = self.rotatePoint(p, theta)
         self.direction -= theta
         self.direction = self.direction % (2 * math.pi)
-        print('direction is %lf' % self.direction)
-        # print("p1 is (%d, %d), rotate is %d" % (p1.x(), p1.y(), theta))
-        # print("p2 is (%d, %d), rotate is %d" % (p2.x(), p2.y(), theta))
-        # print("p3 is (%d, %d), rotate is %d" % (p3.x(), p3.y(), theta))
-        # print("p4 is (%d, %d), rotate is %d" % (p4.x(), p4.y(), theta))
 
     def rotatePoint(self, p, theta):
         order = p-self.center;
@@ -87,7 +80,7 @@ class Shape(object):
 
     def close(self):
         self.center = QPointF((self.points[0].x()+self.points[2].x()) / 2, (self.points[0].y()+self.points[2].y()) / 2)
-        print("refresh center!")
+        # print("refresh center!")
         self._closed = True
 
     def reachMaxPoints(self):

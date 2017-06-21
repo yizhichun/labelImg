@@ -9,16 +9,6 @@ import math
 
 XML_EXT = '.xml'
 
-def rotatePoint(xc,yc, xp,yp, theta):        
-    xoff = xp-xc;
-    yoff = yp-yc;
-
-    cosTheta = math.cos(theta)
-    sinTheta = math.sin(theta)
-    pResx = cosTheta * xoff + sinTheta * yoff
-    pResy = - sinTheta * xoff + cosTheta * yoff
-    # pRes = (xc + pResx, yc + pResy)
-    return xc+pResx,yc+pResy
 
 class PascalVocWriter:
 
@@ -208,13 +198,24 @@ class PascalVocReader:
         h = float(robndbox.find('h').text)
         angle = float(robndbox.find('angle').text)
 
-        p0x,p0y = rotatePoint(cx,cy, cx - w/2, cy - h/2, -angle)
-        p1x,p1y = rotatePoint(cx,cy, cx + w/2, cy - h/2, -angle)
-        p2x,p2y = rotatePoint(cx,cy, cx + w/2, cy + h/2, -angle)
-        p3x,p3y = rotatePoint(cx,cy, cx - w/2, cy + h/2, -angle)
+        p0x,p0y = self.rotatePoint(cx,cy, cx - w/2, cy - h/2, -angle)
+        p1x,p1y = self.rotatePoint(cx,cy, cx + w/2, cy - h/2, -angle)
+        p2x,p2y = self.rotatePoint(cx,cy, cx + w/2, cy + h/2, -angle)
+        p3x,p3y = self.rotatePoint(cx,cy, cx - w/2, cy + h/2, -angle)
 
         points = [(p0x, p0y), (p1x, p1y), (p2x, p2y), (p3x, p3y)]
         self.shapes.append((label, points, angle, None, None, difficult))
+
+    def rotatePoint(self, xc,yc, xp,yp, theta):        
+        xoff = xp-xc;
+        yoff = yp-yc;
+
+        cosTheta = math.cos(theta)
+        sinTheta = math.sin(theta)
+        pResx = cosTheta * xoff + sinTheta * yoff
+        pResy = - sinTheta * xoff + cosTheta * yoff
+        # pRes = (xc + pResx, yc + pResy)
+        return xc+pResx,yc+pResy
 
     def parseXML(self):
         assert self.filepath.endswith(XML_EXT), "Unsupport file format"
@@ -231,7 +232,7 @@ class PascalVocReader:
         for object_iter in xmltree.findall('object'):
             typeItem = object_iter.find('type')
 
-            print(typeItem.text)
+            # print(typeItem.text)
             if typeItem.text == 'bndbox':
                 bndbox = object_iter.find("bndbox")
                 label = object_iter.find('name').text

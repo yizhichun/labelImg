@@ -51,7 +51,7 @@ class LabelFile(object):
             difficult = int(shape['difficult'])           
             direction = shape['direction']
             # if shape is normal box, save as bounding box 
-            print('direction is %lf' % direction)
+            # print('direction is %lf' % direction)
             if direction % (math.pi/2) == 0:
                 bndbox = LabelFile.convertPoints2BndBox(points)
                 writer.addBndBox(bndbox[0], bndbox[1], bndbox[2], 
