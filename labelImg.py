@@ -686,11 +686,12 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def loadLabels(self, shapes):
         s = []
-        for label, points, line_color, fill_color, difficult in shapes:
+        for label, points, direction, line_color, fill_color, difficult in shapes:
             shape = Shape(label=label)
             for x, y in points:
                 shape.addPoint(QPointF(x, y))
             shape.difficult = difficult
+            shape.direction = direction
             shape.close()
             s.append(shape)
             self.addLabel(shape)
@@ -716,7 +717,11 @@ class MainWindow(QMainWindow, WindowMixin):
                         if s.fill_color != self.fillColor else None,
                         points=[(p.x(), p.y()) for p in s.points],
                        # add chris
-                        difficult = s.difficult)
+                        difficult = s.difficult,
+                        # You Hao 2017/06/21
+                        # add for rotated bounding box
+                        direction = s.direction,
+                        center = s.center)
 
         shapes = [format_shape(shape) for shape in self.canvas.shapes]
         # Can add differrent annotation formats here
@@ -895,7 +900,7 @@ class MainWindow(QMainWindow, WindowMixin):
             # Default : select last item if there is at least one item
             if self.labelList.count():
                 self.labelList.setCurrentItem(self.labelList.item(self.labelList.count()-1))
-                self.labelList.setItemSelected(self.labelList.item(self.labelList.count()-1), True)
+                # self.labelList.setItemSelected(self.labelList.item(self.labelList.count()-1), True)
 
             self.canvas.setFocus(True)
             return True
@@ -1047,9 +1052,10 @@ class MainWindow(QMainWindow, WindowMixin):
                 # If the labelling file does not exist yet, create if and
                 # re-save it with the verified attribute.
                 self.saveFile()
-                self.labelFile.toggleVerify()
-
-            self.canvas.verified = self.labelFile.verified
+                if self.labelFile is not None:
+                    self.labelFile.toggleVerify()
+            if self.labelFile is not None:
+                self.canvas.verified = self.labelFile.verified
             self.paintCanvas()
             self.saveFile()
 

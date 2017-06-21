@@ -11,7 +11,7 @@ from pascal_voc_io import PascalVocWriter
 from pascal_voc_io import XML_EXT
 import os.path
 import sys
-
+import math
 
 class LabelFileError(Exception):
     pass
@@ -48,9 +48,18 @@ class LabelFile(object):
             points = shape['points']
             label = shape['label']
             # Add Chris
-            difficult = int(shape['difficult'])
-            bndbox = LabelFile.convertPoints2BndBox(points)
-            writer.addBndBox(bndbox[0], bndbox[1], bndbox[2], bndbox[3], label, difficult)
+            difficult = int(shape['difficult'])           
+            direction = shape['direction']
+            # if shape is normal box, save as bounding box 
+            print('direction is %lf' % direction)
+            if direction % (math.pi/2) == 0:
+                bndbox = LabelFile.convertPoints2BndBox(points)
+                writer.addBndBox(bndbox[0], bndbox[1], bndbox[2], 
+                    bndbox[3], label, difficult)
+            else: #if shape is rotated box, save as rotated bounding box
+                robndbox = LabelFile.convertPoints2RotatedBndBox(shape)
+                writer.addRotatedBndBox(robndbox[0],robndbox[1],
+                    robndbox[2],robndbox[3],robndbox[4],label,difficult)
 
         writer.save(targetFile=filename)
         return
@@ -87,3 +96,23 @@ class LabelFile(object):
             ymin = 1
 
         return (int(xmin), int(ymin), int(xmax), int(ymax))
+
+    # You Hao, 2017/06/121
+    @staticmethod
+    def convertPoints2RotatedBndBox(shape):
+        points = shape['points']
+        center = shape['center']
+        direction = shape['direction']
+
+        cx = center.x()
+        cy = center.y()
+        
+        w = math.sqrt((points[0][0]-points[1][0]) ** 2 +
+            (points[0][1]-points[1][1]) ** 2)
+
+        h = math.sqrt((points[2][0]-points[1][0]) ** 2 +
+            (points[2][1]-points[1][1]) ** 2)
+
+        angle = direction % math.pi
+
+        return (round(cx,4),round(cy,4),round(w,4),round(h,4),round(angle,6))
