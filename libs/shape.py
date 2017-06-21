@@ -64,9 +64,10 @@ class Shape(object):
 
 
     def rotate(self, theta):
+        print('rotate angle is %lf' % theta)
         for i, p in enumerate(self.points):
-            # print('shape points (%d, %d)' % (p.x(), p.y()))
-            self.points[i] = self.rotatePoint(p, 10)
+            print('shape points (%d, %d)' % (p.x(), p.y()))
+            self.points[i] = self.rotatePoint(p, theta)
         # print("p1 is (%d, %d), rotate is %d" % (p1.x(), p1.y(), theta))
         # print("p2 is (%d, %d), rotate is %d" % (p2.x(), p2.y(), theta))
         # print("p3 is (%d, %d), rotate is %d" % (p3.x(), p3.y(), theta))

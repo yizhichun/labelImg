@@ -11,6 +11,7 @@ except ImportError:
 
 from shape import Shape
 from lib import distance
+import math
 
 CURSOR_DEFAULT = Qt.ArrowCursor
 CURSOR_POINT = Qt.PointingHandCursor
@@ -60,6 +61,9 @@ class Canvas(QWidget):
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.WheelFocus)
         self.verified = False
+
+        # judge if some vertex out of pixel, then stop to rotate
+        self.isCanRotate = True
 
     def enterEvent(self, ev):
         self.overrideCursor(self._cursor)
@@ -210,6 +214,7 @@ class Canvas(QWidget):
 
     def mouseReleaseEvent(self, ev):
         if ev.button() == Qt.RightButton and not self.selectedVertex():
+            isCanRotate = True
             menu = self.menus[bool(self.selectedShapeCopy)]
             self.restoreCursor()
             if not menu.exec_(self.mapToGlobal(ev.pos()))\
@@ -315,7 +320,7 @@ class Canvas(QWidget):
         self.offsets = QPointF(x1, y1), QPointF(x2, y2)
 
     def boundedMoveVertex(self, pos):
-        print("Moving Vertex")
+        # print("Moving Vertex")
         index, shape = self.hVertex, self.hShape
         point = shape[index]
         if self.outOfPixmap(pos):
@@ -340,28 +345,43 @@ class Canvas(QWidget):
 
 
     def boundedRotateShape(self, pos):
-        # print("Rotate Shape")
-        index, shape = self.hVertex, self.hShape
-        point = shape[index]
-        if self.outOfPixmap(pos):
-            pos = self.intersectionPoint(point, pos)
+        print("Rotate Shape")
+        
+        if isCanRotate:
+            index, shape = self.hVertex, self.hShape
+            point = shape[index]
+            
+            # rotate
+            angle = self.getAngle(shape.center,pos,point)
+            shape.rotate(angle)
+            
+            # judge if some vertex is out of pixmap
+            for i, p in enumerate(shape.points):
+                if self.outOfPixmap(p): 
+                    shape.rotate(-angle) 
+                    isCanRotate = False         
+                    return
 
-        shiftPos = pos - point
-        shape.moveVertexBy(index, shiftPos)
+    def getAngle(self, center, p1, p2):
+        dx1 = p1.x() - center.x();
+        dy1 = p1.y() - center.y();
 
-        lindex = (index + 1) % 4
-        rindex = (index + 3) % 4
-        lshift = None
-        rshift = None
-        if index % 2 == 0:
-            rshift = QPointF(shiftPos.x(), 0)
-            lshift = QPointF(0, shiftPos.y())
+        dx2 = p2.x() - center.x();
+        dy2 = p2.y() - center.y();
+
+        c = math.sqrt(dx1*dx1 + dy1*dy1) * math.sqrt(dx2*dx2 + dy2*dy2)
+        if c == 0: return 0
+        print("dx1:%d,dx2:%d,dy1:%d,dy2:%d,c:%lf" % (dx1,dx2,dy1,dy2,c))
+        y = (dx1*dx2+dy1*dy2)/c
+        print(y)
+        if y>1: return 0
+        angle = math.acos(y)
+
+        if (dx1*dy2-dx2*dy1)>0:   
+            return angle
         else:
-            lshift = QPointF(shiftPos.x(), 0)
-            rshift = QPointF(0, shiftPos.y())
-        shape.moveVertexBy(rindex, rshift)
-        shape.moveVertexBy(lindex, lshift)
-    
+            return -angle
+        # return angle
 
     def boundedMoveShape(self, shape, pos):
         if self.outOfPixmap(pos):
