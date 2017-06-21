@@ -61,7 +61,6 @@ class Canvas(QWidget):
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.WheelFocus)
         self.verified = False
-
         # judge if some vertex out of pixel, then stop to rotate
         self.isCanRotate = True
 
@@ -213,8 +212,9 @@ class Canvas(QWidget):
             self.repaint()
 
     def mouseReleaseEvent(self, ev):
-        if ev.button() == Qt.RightButton and not self.selectedVertex():
-            isCanRotate = True
+        if ev.button() == Qt.RightButton:
+            self.isCanRotate = True
+        if ev.button() == Qt.RightButton and not self.selectedVertex():            
             menu = self.menus[bool(self.selectedShapeCopy)]
             self.restoreCursor()
             if not menu.exec_(self.mapToGlobal(ev.pos()))\
@@ -329,38 +329,55 @@ class Canvas(QWidget):
         shiftPos = pos - point
         shape.moveVertexBy(index, shiftPos)
 
+        sindex = (index + 2) % 4
+
         lindex = (index + 1) % 4
         rindex = (index + 3) % 4
         lshift = None
         rshift = None
+        p3, p4 = self.getSymmetricalPoint(shape.direction, shape[sindex], point)
         if index % 2 == 0:
-            rshift = QPointF(shiftPos.x(), 0)
-            lshift = QPointF(0, shiftPos.y())
+            shape[lindex] = p4
+            shape[rindex] = p3
+            # rshift = QPointF(shiftPos.x(), 0)
+            # lshift = QPointF(0, shiftPos.y())
         else:
-            lshift = QPointF(shiftPos.x(), 0)
-            rshift = QPointF(0, shiftPos.y())
-        shape.moveVertexBy(rindex, rshift)
-        shape.moveVertexBy(lindex, lshift)
+            shape[lindex] = p4
+            shape[rindex] = p3
+            # lshift = QPointF(shiftPos.x(), 0)
+            # rshift = QPointF(0, shiftPos.y())
+        # shape.moveVertexBy(rindex, rshift)
+        # shape.moveVertexBy(lindex, lshift)
         shape.close()
+
+    def getSymmetricalPoint(self, theta, p1, p2):
+        center = (p1 + p2) / 2
+        a = math.tan(theta)
+        b = center.y() - a * center.x()
+        X3 = p1.x() - 2*a*(a*p1.x()-p1.y()+b) / (a*a+1)
+        Y3 = p1.y() + 2*(a*p1.x()-p1.y()+b) / (a*a+1)
+        X4 = p2.x() - 2*a*(a*p2.x()-p2.y()+b) / (a*a+1)
+        Y4 = p2.y() + 2*(a*p2.x()-p2.y()+b) / (a*a+1)
+
+        p3 = QPointF(X3, Y3)
+        p4 = QPointF(X4, Y4)
+        return p3, p4
+
 
 
     def boundedRotateShape(self, pos):
-        print("Rotate Shape")
-        
-        if isCanRotate:
-            index, shape = self.hVertex, self.hShape
-            point = shape[index]
-            
-            # rotate
-            angle = self.getAngle(shape.center,pos,point)
-            shape.rotate(angle)
-            
-            # judge if some vertex is out of pixmap
-            for i, p in enumerate(shape.points):
-                if self.outOfPixmap(p): 
-                    shape.rotate(-angle) 
-                    isCanRotate = False         
-                    return
+        print("Rotate Shape2")          
+        # judge if some vertex is out of pixmap
+        index, shape = self.hVertex, self.hShape
+        point = shape[index]
+
+        angle = self.getAngle(shape.center,pos,self.prevPoint)
+        for i, p in enumerate(shape.points):
+            if self.outOfPixmap(shape.rotatePoint(p,angle)):
+                # print("out of pixmap")
+                return
+        shape.rotate(angle)
+        self.prevPoint = pos
 
     def getAngle(self, center, p1, p2):
         dx1 = p1.x() - center.x();
@@ -371,9 +388,9 @@ class Canvas(QWidget):
 
         c = math.sqrt(dx1*dx1 + dy1*dy1) * math.sqrt(dx2*dx2 + dy2*dy2)
         if c == 0: return 0
-        print("dx1:%d,dx2:%d,dy1:%d,dy2:%d,c:%lf" % (dx1,dx2,dy1,dy2,c))
+        # print("dx1:%d,dx2:%d,dy1:%d,dy2:%d,c:%lf" % (dx1,dx2,dy1,dy2,c))
         y = (dx1*dx2+dy1*dy2)/c
-        print(y)
+        # print(y)
         if y>1: return 0
         angle = math.acos(y)
 

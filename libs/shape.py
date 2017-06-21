@@ -64,10 +64,13 @@ class Shape(object):
 
 
     def rotate(self, theta):
-        print('rotate angle is %lf' % theta)
+        # print('rotate angle is %lf' % theta)
         for i, p in enumerate(self.points):
-            print('shape points (%d, %d)' % (p.x(), p.y()))
+            # print('shape points (%d, %d)' % (p.x(), p.y()))
             self.points[i] = self.rotatePoint(p, theta)
+        self.direction += theta
+        self.direction = self.direction % (2 * math.pi)
+        print('direction is %lf' % self.direction)
         # print("p1 is (%d, %d), rotate is %d" % (p1.x(), p1.y(), theta))
         # print("p2 is (%d, %d), rotate is %d" % (p2.x(), p2.y(), theta))
         # print("p3 is (%d, %d), rotate is %d" % (p3.x(), p3.y(), theta))
@@ -132,6 +135,14 @@ class Shape(object):
                 self.drawVertex(vrtx_path, i)
             if self.isClosed():
                 line_path.lineTo(self.points[0])
+
+            dir_path = QPainterPath()
+
+            tempP = self.points[0]+QPointF(10,10)
+            print('direction2 is %lf, a os %lf' % (self.direction,math.tan(self.direction)))
+            dir_path.moveTo(tempP)
+            dir_path.lineTo(tempP + QPointF(10, (10-tempP.x())* math.tan(self.direction)+tempP.y()))
+            painter.drawPath(dir_path)
 
             painter.drawPath(line_path)
             painter.drawPath(vrtx_path)
