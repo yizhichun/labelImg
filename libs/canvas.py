@@ -204,9 +204,9 @@ class Canvas(QWidget):
         elif ev.button() == Qt.RightButton and self.editing():
             self.selectShapePoint(pos)
             
-            if self.selectedShape is not None:
-                print('point is (%d, %d)' % (pos.x(), pos.y()))
-                self.selectedShape.rotate(10)
+            # if self.selectedShape is not None:
+            #     print('point is (%d, %d)' % (pos.x(), pos.y()))
+            #     self.selectedShape.rotate(10)
 
             self.prevPoint = pos
             self.repaint()
@@ -301,6 +301,13 @@ class Canvas(QWidget):
         if self.selectedVertex():  # A vertex is marked for selection.
             index, shape = self.hVertex, self.hShape
             shape.highlightVertex(index, shape.MOVE_VERTEX)
+
+            shape.selected = True
+            self.selectedShape = shape
+            self.calculateOffsets(shape, point)
+            self.setHiding()
+            self.selectionChanged.emit(True)
+
             return
         for shape in reversed(self.shapes):
             if self.isVisible(shape) and shape.containsPoint(point):
@@ -325,45 +332,63 @@ class Canvas(QWidget):
         point = shape[index]
         if self.outOfPixmap(pos):
             pos = self.intersectionPoint(point, pos)
-
-        shiftPos = pos - point
-        shape.moveVertexBy(index, shiftPos)
-
+        
+        # print("index is %d" % index)
         sindex = (index + 2) % 4
+        # get the other 3 points after transformed
+        p2,p3,p4 = self.getAdjointPoints(shape.direction, shape[sindex], pos, index)
 
+        # if one pixal out of map , do nothing
+        if (self.outOfPixmap(p2) or
+            self.outOfPixmap(p3) or
+            self.outOfPixmap(p4)):
+                return
+
+        # move 4 pixal one by one 
+        shape.moveVertexBy(index, pos - point)
         lindex = (index + 1) % 4
+        
         rindex = (index + 3) % 4
-        lshift = None
-        rshift = None
-        p3, p4 = self.getSymmetricalPoint(shape.direction, shape[sindex], point)
-        if index % 2 == 0:
-            shape[lindex] = p4
-            shape[rindex] = p3
-            # rshift = QPointF(shiftPos.x(), 0)
-            # lshift = QPointF(0, shiftPos.y())
-        else:
-            shape[lindex] = p4
-            shape[rindex] = p3
-            # lshift = QPointF(shiftPos.x(), 0)
-            # rshift = QPointF(0, shiftPos.y())
-        # shape.moveVertexBy(rindex, rshift)
-        # shape.moveVertexBy(lindex, lshift)
+        shape[lindex] = p2
+        # shape[sindex] = p3
+        shape[rindex] = p4
         shape.close()
 
-    def getSymmetricalPoint(self, theta, p1, p2):
-        center = (p1 + p2) / 2
-        a = math.tan(theta)
-        b = center.y() - a * center.x()
-        X3 = p1.x() - 2*a*(a*p1.x()-p1.y()+b) / (a*a+1)
-        Y3 = p1.y() + 2*(a*p1.x()-p1.y()+b) / (a*a+1)
-        X4 = p2.x() - 2*a*(a*p2.x()-p2.y()+b) / (a*a+1)
-        Y4 = p2.y() + 2*(a*p2.x()-p2.y()+b) / (a*a+1)
+    
 
-        p3 = QPointF(X3, Y3)
-        p4 = QPointF(X4, Y4)
-        return p3, p4
+    def getAdjointPoints(self, theta, p3, p1, index):
+        # p3 = center
+        # p3 = 2*center-p1
+        a1 = math.tan(theta)
+        if (a1 == 0):
+            if index % 2 == 0:
+                p2 = QPointF(p3.x(), p1.y())
+                p4 = QPointF(p1.x(), p3.y())
+            else:            
+                p4 = QPointF(p3.x(), p1.y())
+                p2 = QPointF(p1.x(), p3.y())
+        else:    
+            a3 = a1
+            a2 = - 1/a1
+            a4 = - 1/a1
+            b1 = p1.y() - a1 * p1.x()
+            b2 = p1.y() - a2 * p1.x()
+            b3 = p3.y() - a1 * p3.x()
+            b4 = p3.y() - a2 * p3.x()
 
+            if index % 2 == 0:
+                p2 = self.getCrossPoint(a1,b1,a4,b4)
+                p4 = self.getCrossPoint(a2,b2,a3,b3)
+            else:            
+                p4 = self.getCrossPoint(a1,b1,a4,b4)
+                p2 = self.getCrossPoint(a2,b2,a3,b3)
 
+        return p2,p3,p4
+
+    def getCrossPoint(self,a1,b1,a2,b2):
+        x = (b2-b1)/(a1-a2)
+        y = (a1*b2 - a2*b1)/(a1-a2)
+        return QPointF(x,y)
 
     def boundedRotateShape(self, pos):
         print("Rotate Shape2")          
@@ -371,7 +396,7 @@ class Canvas(QWidget):
         index, shape = self.hVertex, self.hShape
         point = shape[index]
 
-        angle = self.getAngle(shape.center,pos,self.prevPoint)
+        angle = self.getAngle(shape.center,pos,point)
         for i, p in enumerate(shape.points):
             if self.outOfPixmap(shape.rotatePoint(p,angle)):
                 # print("out of pixmap")
@@ -388,9 +413,7 @@ class Canvas(QWidget):
 
         c = math.sqrt(dx1*dx1 + dy1*dy1) * math.sqrt(dx2*dx2 + dy2*dy2)
         if c == 0: return 0
-        # print("dx1:%d,dx2:%d,dy1:%d,dy2:%d,c:%lf" % (dx1,dx2,dy1,dy2,c))
         y = (dx1*dx2+dy1*dy2)/c
-        # print(y)
         if y>1: return 0
         angle = math.acos(y)
 
@@ -398,7 +421,6 @@ class Canvas(QWidget):
             return angle
         else:
             return -angle
-        # return angle
 
     def boundedMoveShape(self, shape, pos):
         if self.outOfPixmap(pos):

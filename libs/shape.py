@@ -68,7 +68,7 @@ class Shape(object):
         for i, p in enumerate(self.points):
             # print('shape points (%d, %d)' % (p.x(), p.y()))
             self.points[i] = self.rotatePoint(p, theta)
-        self.direction += theta
+        self.direction -= theta
         self.direction = self.direction % (2 * math.pi)
         print('direction is %lf' % self.direction)
         # print("p1 is (%d, %d), rotate is %d" % (p1.x(), p1.y(), theta))
@@ -136,13 +136,12 @@ class Shape(object):
             if self.isClosed():
                 line_path.lineTo(self.points[0])
 
-            dir_path = QPainterPath()
-
-            tempP = self.points[0]+QPointF(10,10)
-            print('direction2 is %lf, a os %lf' % (self.direction,math.tan(self.direction)))
-            dir_path.moveTo(tempP)
-            dir_path.lineTo(tempP + QPointF(10, (10-tempP.x())* math.tan(self.direction)+tempP.y()))
-            painter.drawPath(dir_path)
+            # dir_path = QPainterPath()
+            # tempP = self.points[0]+QPointF(10,10)
+            # print('direction2 is %lf, a os %lf' % (self.direction,math.tan(self.direction)))
+            # dir_path.moveTo(tempP)
+            # dir_path.lineTo(tempP + QPointF(10, (10-tempP.x())* math.tan(self.direction)+tempP.y()))
+            # painter.drawPath(dir_path)
 
             painter.drawPath(line_path)
             painter.drawPath(vrtx_path)
@@ -150,6 +149,13 @@ class Shape(object):
             if self.fill:
                 color = self.select_fill_color if self.selected else self.fill_color
                 painter.fillPath(line_path, color)
+
+            if self.center is not None:
+                center_path = QPainterPath()
+                d = self.point_size / self.scale
+                center_path.addRect(self.center.x() - d / 2, self.center.y() - d / 2, d, d)
+                painter.drawPath(center_path)
+                painter.fillPath(center_path, self.vertex_fill_color)
 
     def drawVertex(self, path, i):
         d = self.point_size / self.scale
@@ -168,6 +174,8 @@ class Shape(object):
             path.addEllipse(point, d / 2.0, d / 2.0)
         else:
             assert False, "unsupported vertex shape"
+    # def drawVertex(self, path, center):
+    #     pass
 
     def nearestVertex(self, point, epsilon):
         for i, p in enumerate(self.points):
