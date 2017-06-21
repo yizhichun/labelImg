@@ -46,6 +46,7 @@ class Shape(object):
 
         self.direction = 0  # added by hy
         self.center = None # added by hy
+        self.isRotated = True 
 
         self._highlightIndex = None
         self._highlightMode = self.NEAR_VERTEX
@@ -89,7 +90,7 @@ class Shape(object):
         return False
 
     def addPoint(self, point):
-        if self.points and point == self.points[0]:
+        if self.points and len(self.points) == 4 and point == self.points[0]:
             self.close()
         else:
             self.points.append(point)
@@ -148,7 +149,10 @@ class Shape(object):
                 d = self.point_size / self.scale
                 center_path.addRect(self.center.x() - d / 2, self.center.y() - d / 2, d, d)
                 painter.drawPath(center_path)
-                painter.fillPath(center_path, self.vertex_fill_color)
+                if self.isRotated:
+                    painter.fillPath(center_path, self.vertex_fill_color)
+                else:
+                    painter.fillPath(center_path, QColor(0, 0, 0))
 
     def drawVertex(self, path, i):
         d = self.point_size / self.scale
@@ -204,6 +208,11 @@ class Shape(object):
     def copy(self):
         shape = Shape("%s" % self.label)
         shape.points = [p for p in self.points]
+        
+        shape.center = self.center
+        shape.direction = self.direction
+        shape.isRotated = self.isRotated
+
         shape.fill = self.fill
         shape.selected = self.selected
         shape._closed = self._closed

@@ -187,7 +187,7 @@ class PascalVocReader:
         xmax = int(bndbox.find('xmax').text)
         ymax = int(bndbox.find('ymax').text)
         points = [(xmin, ymin), (xmax, ymin), (xmax, ymax), (xmin, ymax)]
-        self.shapes.append((label, points, 0, None, None, difficult))
+        self.shapes.append((label, points, 0, False, None, None, difficult))
 
     # You Hao 2017/06/21
     # add to analysis robndbox load from xml
@@ -204,7 +204,7 @@ class PascalVocReader:
         p3x,p3y = self.rotatePoint(cx,cy, cx - w/2, cy + h/2, -angle)
 
         points = [(p0x, p0y), (p1x, p1y), (p2x, p2y), (p3x, p3y)]
-        self.shapes.append((label, points, angle, None, None, difficult))
+        self.shapes.append((label, points, angle, True, None, None, difficult))
 
     def rotatePoint(self, xc,yc, xp,yp, theta):        
         xoff = xp-xc;

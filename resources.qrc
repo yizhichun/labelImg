@@ -8,6 +8,7 @@
 <file alias="file">icons/file.png</file>
 <file alias="labels">icons/labels.png</file>
 <file alias="new">icons/objects.png</file>
+<file alias="newRo">icons/robjects.png</file>
 <file alias="close">icons/close.png</file>
 <file alias="fit-width">icons/fit-width.png</file>
 <file alias="fit-window">icons/fit-window.png</file>

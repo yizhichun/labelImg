@@ -18,23 +18,51 @@
     <truncated>0</truncated>
     <difficult>0</difficult>
     <bndbox>
-      <xmin>76</xmin>
-      <ymin>156</ymin>
-      <xmax>242</xmax>
-      <ymax>212</ymax>
+      <xmin>241</xmin>
+      <ymin>52</ymin>
+      <xmax>383</xmax>
+      <ymax>107</ymax>
     </bndbox>
   </object>
   <object>
     <type>bndbox</type>
-    <name>dog</name>
+    <name>person</name>
     <pose>Unspecified</pose>
     <truncated>0</truncated>
     <difficult>0</difficult>
     <bndbox>
-      <xmin>194</xmin>
-      <ymin>48</ymin>
-      <xmax>336</xmax>
-      <ymax>103</ymax>
+      <xmin>69</xmin>
+      <ymin>63</ymin>
+      <xmax>214</xmax>
+      <ymax>93</ymax>
     </bndbox>
+  </object>
+  <object>
+    <type>robndbox</type>
+    <name>dog</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <robndbox>
+      <cx>157.0</cx>
+      <cy>170.0</cy>
+      <w>166.0</w>
+      <h>56.0</h>
+      <angle>3.039229</angle>
+    </robndbox>
+  </object>
+  <object>
+    <type>robndbox</type>
+    <name>dog</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <robndbox>
+      <cx>252.5622</cx>
+      <cy>174.811</cy>
+      <w>125.0</w>
+      <h>37.0</h>
+      <angle>2.434159</angle>
+    </robndbox>
   </object>
 </annotation>

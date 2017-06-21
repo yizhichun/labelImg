@@ -241,6 +241,10 @@ class MainWindow(QMainWindow, WindowMixin):
 
         create = action('Create\nRectBox', self.createShape,
                         'w', 'new', u'Draw a new Box', enabled=False)
+
+        createRo = action('Create\nRotatedRBox', self.createRoShape,
+                        'e', 'newRo', u'Draw a new RotatedRBox', enabled=False)
+
         delete = action('Delete\nRectBox', self.deleteSelectedShape,
                         'Delete', 'delete', u'Delete', enabled=False)
         copy = action('&Duplicate\nRectBox', self.copySelectedShape,
@@ -318,7 +322,7 @@ class MainWindow(QMainWindow, WindowMixin):
         # Store actions for further handling.
         self.actions = struct(save=save, saveAs=saveAs, open=open, close=close,
                               lineColor=color1, fillColor=color2,
-                              create=create, delete=delete, edit=edit, copy=copy,
+                              create=create, createRo=createRo, delete=delete, edit=edit, copy=copy,
                               createMode=createMode, editMode=editMode, advancedMode=advancedMode,
                               shapeLineColor=shapeLineColor, shapeFillColor=shapeFillColor,
                               zoom=zoom, zoomIn=zoomIn, zoomOut=zoomOut, zoomOrg=zoomOrg,
@@ -363,7 +367,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         self.tools = self.toolbar('Tools')
         self.actions.beginner = (
-            open, opendir, openNextImg, openPrevImg, verify, save, None, create, copy, delete, None,
+            open, opendir, openNextImg, openPrevImg, verify, save, None, create, createRo, copy, delete, None,
             zoomIn, zoom, zoomOut, fitWindow, fitWidth)
 
         self.actions.advanced = (
@@ -512,6 +516,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.dirty = False
         self.actions.save.setEnabled(False)
         self.actions.create.setEnabled(True)
+        self.actions.createRo.setEnabled(True)
 
     def toggleActions(self, value=True):
         """Enable/Disable widgets which depend on an opened image."""
@@ -558,10 +563,21 @@ class MainWindow(QMainWindow, WindowMixin):
     def tutorial(self):
         subprocess.Popen([self.screencastViewer, self.screencast])
 
+    # create Normal Rect
     def createShape(self):
         assert self.beginner()
         self.canvas.setEditing(False)
+        self.canvas.canDrawRotatedRect = False
         self.actions.create.setEnabled(False)
+        self.actions.createRo.setEnabled(False)
+
+    # create Rotated Rect
+    def createRoShape(self):
+        assert self.beginner()
+        self.canvas.setEditing(False)
+        self.canvas.canDrawRotatedRect = True
+        self.actions.create.setEnabled(False)
+        self.actions.createRo.setEnabled(False)
 
     def toggleDrawingSensitive(self, drawing=True):
         """In the middle of drawing, toggling between modes should be disabled."""
@@ -572,6 +588,7 @@ class MainWindow(QMainWindow, WindowMixin):
             self.canvas.setEditing(True)
             self.canvas.restoreCursor()
             self.actions.create.setEnabled(True)
+            self.actions.createRo.setEnabled(True)
 
     def toggleDrawMode(self, edit=True):
         self.canvas.setEditing(edit)
@@ -579,6 +596,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.actions.editMode.setEnabled(not edit)
 
     def setCreateMode(self):
+        print('setCreateMode')
         assert self.advanced()
         self.toggleDrawMode(False)
 
@@ -686,12 +704,13 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def loadLabels(self, shapes):
         s = []
-        for label, points, direction, line_color, fill_color, difficult in shapes:
+        for label, points, direction, isRotated, line_color, fill_color, difficult in shapes:
             shape = Shape(label=label)
             for x, y in points:
                 shape.addPoint(QPointF(x, y))
             shape.difficult = difficult
             shape.direction = direction
+            shape.isRotated = isRotated
             shape.close()
             s.append(shape)
             self.addLabel(shape)
@@ -721,7 +740,8 @@ class MainWindow(QMainWindow, WindowMixin):
                         # You Hao 2017/06/21
                         # add for rotated bounding box
                         direction = s.direction,
-                        center = s.center)
+                        center = s.center,
+                        isRotated = s.isRotated)
 
         shapes = [format_shape(shape) for shape in self.canvas.shapes]
         # Can add differrent annotation formats here
@@ -785,6 +805,7 @@ class MainWindow(QMainWindow, WindowMixin):
             if self.beginner():  # Switch to edit mode.
                 self.canvas.setEditing(True)
                 self.actions.create.setEnabled(True)
+                self.actions.createRo.setEnabled(True)
             else:
                 self.actions.editMode.setEnabled(True)
             self.setDirty()

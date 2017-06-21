@@ -34,6 +34,8 @@ class Canvas(QWidget):
 
     epsilon = 11.0
 
+
+
     def __init__(self, *args, **kwargs):
         super(Canvas, self).__init__(*args, **kwargs)
         # Initialise local state.
@@ -61,8 +63,8 @@ class Canvas(QWidget):
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.WheelFocus)
         self.verified = False
-        # judge if some vertex out of pixel, then stop to rotate
-        self.isCanRotate = True
+        # judge can draw rotate rect
+        self.canDrawRotatedRect = True
 
     def enterEvent(self, ev):
         self.overrideCursor(self._cursor)
@@ -136,7 +138,7 @@ class Canvas(QWidget):
             #     print("select shape")
             #     self.selectedShapeCopy = self.selectedShape.copy()
             #     self.repaint()
-            if self.selectedVertex():
+            if self.selectedVertex() and self.selectedShape.isRotated:
                 self.boundedRotateShape(pos)
                 # self.shapeMoved.emit()
                 self.repaint()
@@ -211,9 +213,7 @@ class Canvas(QWidget):
             self.prevPoint = pos
             self.repaint()
 
-    def mouseReleaseEvent(self, ev):
-        if ev.button() == Qt.RightButton:
-            self.isCanRotate = True
+    def mouseReleaseEvent(self, ev):        
         if ev.button() == Qt.RightButton and not self.selectedVertex():            
             menu = self.menus[bool(self.selectedShapeCopy)]
             self.restoreCursor()
@@ -391,7 +391,7 @@ class Canvas(QWidget):
         return QPointF(x,y)
 
     def boundedRotateShape(self, pos):
-        print("Rotate Shape2")          
+        # print("Rotate Shape2")          
         # judge if some vertex is out of pixmap
         index, shape = self.hVertex, self.hShape
         point = shape[index]
@@ -549,6 +549,8 @@ class Canvas(QWidget):
 
     def finalise(self):
         assert self.current
+        self.current.isRotated = self.canDrawRotatedRect
+        print(self.canDrawRotatedRect)
         self.current.close()
         self.shapes.append(self.current)
         self.current = None

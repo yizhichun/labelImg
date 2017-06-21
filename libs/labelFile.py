@@ -50,9 +50,10 @@ class LabelFile(object):
             # Add Chris
             difficult = int(shape['difficult'])           
             direction = shape['direction']
+            isRotated = shape['isRotated']
             # if shape is normal box, save as bounding box 
             # print('direction is %lf' % direction)
-            if direction % (math.pi/2) == 0:
+            if not isRotated:
                 bndbox = LabelFile.convertPoints2BndBox(points)
                 writer.addBndBox(bndbox[0], bndbox[1], bndbox[2], 
                     bndbox[3], label, difficult)
